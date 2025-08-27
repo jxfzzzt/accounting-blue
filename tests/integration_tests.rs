@@ -4,7 +4,7 @@ use accounting_core::{
     patterns,
     utils::{EnhancedAccountValidator, EnhancedTransactionValidator, MemoryStorage},
     AccountType, GstCalculator, GstCategory, GstInvoice, GstLineItem, Ledger, LedgerStorage,
-    TransactionBuilder,
+    PaginationOption, TransactionBuilder,
 };
 use bigdecimal::BigDecimal;
 use chrono::NaiveDate;
@@ -395,7 +395,7 @@ async fn test_memory_storage_operations() {
     assert_eq!(retrieved.unwrap().name, "Test Account");
 
     let all_accounts = storage.list_accounts(None, PaginationOption::All).await.unwrap();
-    assert_eq!(all_accounts.items().len(), 1);
+    assert_eq!(all_accounts.into_items().len(), 1);
 
     // Test transaction operations
     let transaction = TransactionBuilder::new(

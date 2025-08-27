@@ -4,11 +4,10 @@
 //! including error handling, query parameter parsing, and response formatting.
 
 use accounting_core::{
-    AccountType, Ledger, PaginationParams, PaginatedResponse,
-    utils::memory_storage::MemoryStorage, Account,
+    AccountType, Ledger, PaginationOption, PaginationParams,
+    utils::memory_storage::MemoryStorage,
 };
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -230,11 +229,12 @@ async fn axum_list_accounts(
     let result = if let Some(type_str) = query.account_type {
         let account_type = parse_account_type(&type_str)
             .map_err(|e| format!("Invalid account type: {}", e))?;
-        ledger.list_accounts_by_type_paginated(account_type, pagination).await
+        ledger.list_accounts_by_type(account_type, PaginationOption::Paginated(pagination)).await
     } else {
-        ledger.list_accounts_paginated(pagination).await
+        ledger.list_accounts(PaginationOption::Paginated(pagination)).await
     }.map_err(|e| format!("Database error: {}", e))?;
 
+    let result = result.to_paginated_response();
     let data = result.items.into_iter().map(|account| AxumAccountDto {
         id: account.id,
         name: account.name,
@@ -289,9 +289,9 @@ async fn actix_get_accounts(
     
     let result = if let Some(filter) = query.filter {
         let account_type = parse_account_type(&filter)?;
-        ledger.list_accounts_by_type_paginated(account_type, pagination).await?
+        ledger.list_accounts_by_type(account_type, PaginationOption::Paginated(pagination)).await?
     } else {
-        ledger.list_accounts_paginated(pagination).await?
+        ledger.list_accounts(PaginationOption::Paginated(pagination)).await?
     };
 
     let accounts = result.items.into_iter().map(|account| ActixAccountDto {
@@ -354,9 +354,9 @@ async fn warp_accounts_handler(
 
     let result = if let Some(type_str) = params.account_type {
         let account_type = parse_account_type(&type_str)?;
-        ledger.list_accounts_by_type_paginated(account_type, pagination).await?
+        ledger.list_accounts_by_type(account_type, PaginationOption::Paginated(pagination)).await?
     } else {
-        ledger.list_accounts_paginated(pagination).await?
+        ledger.list_accounts(PaginationOption::Paginated(pagination)).await?
     };
 
     let data = result.items.into_iter().map(|account| WarpAccountDto {

@@ -8,7 +8,7 @@
 //! - Error handling
 
 use accounting_core::{
-    AccountType, Entry, EntryType, Ledger, PaginationParams, Transaction,
+    AccountType, Entry, EntryType, Ledger, PaginationOption, PaginationParams, Transaction,
     utils::memory_storage::MemoryStorage,
 };
 use bigdecimal::BigDecimal;
@@ -179,7 +179,8 @@ async fn setup_sample_data(ledger: &mut Ledger<MemoryStorage>) -> Result<(), Box
 async fn basic_account_pagination(ledger: &Ledger<MemoryStorage>) -> Result<(), Box<dyn std::error::Error>> {
     // Get first page with default settings (page 1, 50 items per page)
     let pagination = PaginationParams::default();
-    let result = ledger.list_accounts_paginated(pagination).await?;
+    let result = ledger.list_accounts(PaginationOption::Paginated(pagination)).await?;
+    let result = result.to_paginated_response();
 
     println!("📊 First page (default settings):");
     println!("   Items: {}/{}", result.items.len(), result.total_count);
@@ -196,7 +197,8 @@ async fn basic_account_pagination(ledger: &Ledger<MemoryStorage>) -> Result<(), 
 
     // Get first page with smaller page size
     let pagination = PaginationParams::new(1, 5)?;
-    let result = ledger.list_accounts_paginated(pagination).await?;
+    let result = ledger.list_accounts(PaginationOption::Paginated(pagination)).await?;
+    let result = result.to_paginated_response();
 
     println!("\n📊 First page (5 items per page):");
     println!("   Items: {}/{}", result.items.len(), result.total_count);
@@ -213,7 +215,8 @@ async fn basic_account_pagination(ledger: &Ledger<MemoryStorage>) -> Result<(), 
 async fn paginated_accounts_by_type(ledger: &Ledger<MemoryStorage>) -> Result<(), Box<dyn std::error::Error>> {
     // Get only Asset accounts with pagination
     let pagination = PaginationParams::new(1, 10)?;
-    let result = ledger.list_accounts_by_type_paginated(AccountType::Asset, pagination).await?;
+    let result = ledger.list_accounts_by_type(AccountType::Asset, PaginationOption::Paginated(pagination)).await?;
+    let result = result.to_paginated_response();
 
     println!("📊 Asset accounts (page 1):");
     println!("   Total assets: {}", result.total_count);
@@ -225,7 +228,8 @@ async fn paginated_accounts_by_type(ledger: &Ledger<MemoryStorage>) -> Result<()
 
     // Get Revenue accounts
     let pagination2 = PaginationParams::new(1, 10)?;
-    let result = ledger.list_accounts_by_type_paginated(AccountType::Income, pagination2).await?;
+    let result = ledger.list_accounts_by_type(AccountType::Income, PaginationOption::Paginated(pagination2)).await?;
+    let result = result.to_paginated_response();
     
     println!("\n📊 Income accounts:");
     println!("   Total income accounts: {}", result.total_count);
@@ -241,7 +245,8 @@ async fn paginated_accounts_by_type(ledger: &Ledger<MemoryStorage>) -> Result<()
 async fn basic_transaction_pagination(ledger: &Ledger<MemoryStorage>) -> Result<(), Box<dyn std::error::Error>> {
     // Get first page of transactions (10 per page)
     let pagination = PaginationParams::new(1, 10)?;
-    let result = ledger.get_transactions_paginated(None, None, pagination).await?;
+    let result = ledger.get_transactions(None, None, PaginationOption::Paginated(pagination)).await?;
+    let result = result.to_paginated_response();
 
     println!("📊 Recent transactions (page 1 of {}):", result.total_pages);
     println!("   Total transactions: {}", result.total_count);
@@ -258,7 +263,8 @@ async fn basic_transaction_pagination(ledger: &Ledger<MemoryStorage>) -> Result<
     if result.has_next {
         println!("\n📊 Getting second page...");
         let pagination = PaginationParams::new(2, 10)?;
-        let result = ledger.get_transactions_paginated(None, None, pagination).await?;
+        let result = ledger.get_transactions(None, None, PaginationOption::Paginated(pagination)).await?;
+        let result = result.to_paginated_response();
         
         println!("   Page 2 - {} transactions:", result.items.len());
         for transaction in result.items.iter().take(3) {
@@ -276,12 +282,13 @@ async fn basic_transaction_pagination(ledger: &Ledger<MemoryStorage>) -> Result<
 async fn account_transaction_pagination(ledger: &Ledger<MemoryStorage>) -> Result<(), Box<dyn std::error::Error>> {
     // Get transactions for the cash account
     let pagination = PaginationParams::new(1, 5)?;
-    let result = ledger.get_account_transactions_paginated(
+    let result = ledger.get_account_transactions(
         "cash", 
         None, 
         None, 
-        pagination
+        PaginationOption::Paginated(pagination)
     ).await?;
+    let result = result.to_paginated_response();
 
     println!("📊 Cash account transactions:");
     println!("   Total: {} transactions", result.total_count);
@@ -315,12 +322,13 @@ async fn date_filtered_pagination(ledger: &Ledger<MemoryStorage>) -> Result<(), 
     let end_date = NaiveDate::from_ymd_opt(2024, 1, 7);
     let pagination = PaginationParams::new(1, 20)?;
     
-    let result = ledger.get_transactions_paginated(start_date, end_date, pagination).await?;
+    let result = ledger.get_transactions(start_date, end_date, PaginationOption::Paginated(pagination)).await?;
+    let paginated_result = result.to_paginated_response();
 
     println!("📊 Transactions from Jan 1-7, 2024:");
-    println!("   Found: {} transactions", result.total_count);
+    println!("   Found: {} transactions", paginated_result.total_count);
     
-    for transaction in &result.items {
+    for transaction in &paginated_result.items {
         println!("   📅 {} - {} (${:.2})", 
                  transaction.date,
                  transaction.description, 
@@ -332,12 +340,13 @@ async fn date_filtered_pagination(ledger: &Ledger<MemoryStorage>) -> Result<(), 
     let end_date = NaiveDate::from_ymd_opt(2024, 1, 20);
     let pagination2 = PaginationParams::new(1, 20)?;
     
-    let result = ledger.get_transactions_paginated(start_date, end_date, pagination2).await?;
+    let result = ledger.get_transactions(start_date, end_date, PaginationOption::Paginated(pagination2)).await?;
+    let paginated_result = result.to_paginated_response();
     
     println!("\n📊 Transactions from Jan 15-20, 2024:");
-    println!("   Found: {} transactions", result.total_count);
+    println!("   Found: {} transactions", paginated_result.total_count);
     
-    for transaction in &result.items {
+    for transaction in &paginated_result.items {
         println!("   📅 {} - {}", transaction.date, transaction.description);
     }
 
@@ -353,14 +362,15 @@ async fn pagination_navigation_helpers(ledger: &Ledger<MemoryStorage>) -> Result
     
     loop {
         let pagination = PaginationParams::new(current_page, page_size)?;
-        let result = ledger.list_accounts_paginated(pagination).await?;
+        let result = ledger.list_accounts(PaginationOption::Paginated(pagination)).await?;
+        let paginated_result = result.to_paginated_response();
         
         println!("\n   📄 Page {} of {} ({} items):", 
-                 result.page, 
-                 result.total_pages, 
-                 result.items.len());
+                 paginated_result.page, 
+                 paginated_result.total_pages, 
+                 paginated_result.items.len());
         
-        for (i, account) in result.items.iter().enumerate() {
+        for (i, account) in paginated_result.items.iter().enumerate() {
             println!("      {}. {} - {}", 
                      (current_page - 1) * page_size + i as u32 + 1,
                      account.id, 
@@ -368,7 +378,7 @@ async fn pagination_navigation_helpers(ledger: &Ledger<MemoryStorage>) -> Result
         }
         
         // Navigation info
-        let nav_info = build_navigation_info(&result);
+        let nav_info = build_navigation_info(&paginated_result);
         println!("   🔗 Navigation: {}", nav_info);
         
         // Break after showing 2 pages as example
@@ -430,7 +440,8 @@ async fn pagination_ui_helper(ledger: &Ledger<MemoryStorage>) -> Result<(), Box<
     let page_size = 6;
     
     let pagination = PaginationParams::new(page_request, page_size)?;
-    let result = ledger.get_transactions_paginated(None, None, pagination).await?;
+    let result = ledger.get_transactions(None, None, PaginationOption::Paginated(pagination)).await?;
+    let result = result.to_paginated_response();
 
     // Build UI-friendly response
     let ui_response = PaginationUIResponse {

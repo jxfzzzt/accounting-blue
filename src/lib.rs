@@ -7,6 +7,7 @@
 //!
 //! - **Double-entry bookkeeping**: Complete transaction validation and balance tracking
 //! - **Account management**: Support for Assets, Liabilities, Equity, Income, and Expense accounts
+//! - **Paginated responses**: Efficient pagination for large datasets with comprehensive metadata
 //! - **GST calculations**: Indian GST compliance with CGST/SGST/IGST support
 //! - **Financial reporting**: Balance sheets, income statements, and trial balance generation
 //! - **Reconciliation**: Bank statement and payment gateway reconciliation

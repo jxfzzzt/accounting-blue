@@ -4,7 +4,7 @@
 //! handle query parameters, and build efficient data access patterns.
 
 use accounting_core::{
-    AccountType, Ledger, PaginationParams, Account,
+    Account, AccountType, Ledger, PaginationOption, PaginationParams,
     utils::memory_storage::MemoryStorage,
 };
 use serde::{Deserialize, Serialize};
@@ -341,9 +341,9 @@ async fn api_get_accounts(
             "expense" => AccountType::Expense,
             _ => return Err("Invalid account type".into()),
         };
-        ledger.list_accounts_by_type_paginated(account_type, pagination).await?
+        ledger.list_accounts_by_type(account_type, PaginationOption::Paginated(pagination)).await?
     } else {
-        ledger.list_accounts_paginated(pagination).await?
+        ledger.list_accounts(PaginationOption::Paginated(pagination)).await?
     };
 
     let data = result.items.into_iter().map(|account| AccountDto {
@@ -385,12 +385,12 @@ async fn graphql_get_accounts(
                 "EXPENSE" => AccountType::Expense,
                 _ => return Err("Invalid account type".into()),
             };
-            ledger.list_accounts_by_type_paginated(account_type, pagination).await?
+            ledger.list_accounts_by_type(account_type, PaginationOption::Paginated(pagination)).await?
         } else {
-            ledger.list_accounts_paginated(pagination).await?
+            ledger.list_accounts(PaginationOption::Paginated(pagination)).await?
         }
     } else {
-        ledger.list_accounts_paginated(pagination).await?
+        ledger.list_accounts(PaginationOption::Paginated(pagination)).await?
     };
 
     let edges = result.items.into_iter().map(|account| GraphQLAccountEdge {
@@ -430,9 +430,9 @@ async fn process_table_request(
             "expense" => AccountType::Expense,
             _ => return Err("Invalid account type filter".into()),
         };
-        ledger.list_accounts_by_type_paginated(account_type, pagination).await?
+        ledger.list_accounts_by_type(account_type, PaginationOption::Paginated(pagination)).await?
     } else {
-        ledger.list_accounts_paginated(pagination).await?
+        ledger.list_accounts(PaginationOption::Paginated(pagination)).await?
     };
 
     // Note: In a real implementation, you'd handle sorting at the storage level
