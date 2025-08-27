@@ -20,8 +20,12 @@ pub trait LedgerStorage: Send + Sync {
     /// Get an account by ID
     async fn get_account(&self, account_id: &str) -> LedgerResult<Option<Account>>;
 
-    /// List all accounts, optionally filtered by type
-    async fn list_accounts(&self, account_type: Option<AccountType>) -> LedgerResult<Vec<Account>>;
+    /// List accounts with optional pagination and filtering
+    async fn list_accounts(
+        &self,
+        account_type: Option<AccountType>,
+        pagination: PaginationOption,
+    ) -> LedgerResult<ListResponse<Account>>;
 
     /// Update an account
     async fn update_account(&mut self, account: &Account) -> LedgerResult<()>;
@@ -35,20 +39,22 @@ pub trait LedgerStorage: Send + Sync {
     /// Get a transaction by ID
     async fn get_transaction(&self, transaction_id: &str) -> LedgerResult<Option<Transaction>>;
 
-    /// List transactions for a specific account
+    /// List transactions for a specific account with optional pagination
     async fn get_account_transactions(
         &self,
         account_id: &str,
         start_date: Option<NaiveDate>,
         end_date: Option<NaiveDate>,
-    ) -> LedgerResult<Vec<Transaction>>;
+        pagination: PaginationOption,
+    ) -> LedgerResult<ListResponse<Transaction>>;
 
-    /// List all transactions within a date range
+    /// List all transactions within a date range with optional pagination
     async fn get_transactions(
         &self,
         start_date: Option<NaiveDate>,
         end_date: Option<NaiveDate>,
-    ) -> LedgerResult<Vec<Transaction>>;
+        pagination: PaginationOption,
+    ) -> LedgerResult<ListResponse<Transaction>>;
 
     /// Update a transaction
     async fn update_transaction(&mut self, transaction: &Transaction) -> LedgerResult<()>;

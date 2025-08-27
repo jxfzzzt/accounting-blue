@@ -260,9 +260,9 @@ async fn test_account_hierarchy() {
 
     assert_eq!(child_account.parent_id, Some(parent_account.id));
 
-    // Test listing accounts by type
+    // Test listing accounts by type (using convenience method)
     let asset_accounts = ledger
-        .list_accounts_by_type(AccountType::Asset)
+        .list_all_accounts_by_type(AccountType::Asset)
         .await
         .unwrap();
     assert_eq!(asset_accounts.len(), 2);
@@ -318,9 +318,9 @@ async fn test_date_range_filtering() {
     ledger.record_transaction(txn1).await.unwrap();
     ledger.record_transaction(txn2).await.unwrap();
 
-    // Test date range filtering
+    // Test date range filtering (using convenience method)
     let jan_transactions = ledger
-        .get_transactions(
+        .get_all_transactions(
             Some(NaiveDate::from_ymd_opt(2024, 1, 1).unwrap()),
             Some(NaiveDate::from_ymd_opt(2024, 1, 31).unwrap()),
         )
@@ -394,8 +394,8 @@ async fn test_memory_storage_operations() {
     assert!(retrieved.is_some());
     assert_eq!(retrieved.unwrap().name, "Test Account");
 
-    let all_accounts = storage.list_accounts(None).await.unwrap();
-    assert_eq!(all_accounts.len(), 1);
+    let all_accounts = storage.list_accounts(None, PaginationOption::All).await.unwrap();
+    assert_eq!(all_accounts.items().len(), 1);
 
     // Test transaction operations
     let transaction = TransactionBuilder::new(

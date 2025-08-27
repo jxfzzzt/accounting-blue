@@ -297,5 +297,166 @@ pub enum LedgerError {
     Validation(String),
 }
 
+/// Pagination options for listing operations
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+pub enum PaginationOption {
+    /// Return all items without pagination
+    All,
+    /// Return paginated results
+    Paginated(PaginationParams),
+}
+
+impl Default for PaginationOption {
+    fn default() -> Self {
+        Self::All
+    }
+}
+
+impl From<PaginationParams> for PaginationOption {
+    fn from(params: PaginationParams) -> Self {
+        Self::Paginated(params)
+    }
+}
+
+/// Pagination parameters for listing operations
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+pub struct PaginationParams {
+    /// Page number (starting from 1)
+    pub page: u32,
+    /// Number of items per page (max 1000)
+    pub page_size: u32,
+}
+
+impl PaginationParams {
+    /// Create new pagination parameters with validation
+    pub fn new(page: u32, page_size: u32) -> LedgerResult<Self> {
+        if page < 1 {
+            return Err(LedgerError::Validation("Page must be 1 or greater".to_string()));
+        }
+        if page_size < 1 || page_size > 1000 {
+            return Err(LedgerError::Validation("Page size must be between 1 and 1000".to_string()));
+        }
+        Ok(Self { page, page_size })
+    }
+
+    /// Get the offset for database queries
+    pub fn offset(&self) -> u32 {
+        (self.page - 1) * self.page_size
+    }
+
+    /// Get the limit for database queries
+    pub fn limit(&self) -> u32 {
+        self.page_size
+    }
+}
+
+impl Default for PaginationParams {
+    fn default() -> Self {
+        Self {
+            page: 1,
+            page_size: 50,
+        }
+    }
+}
+
+/// Unified response that can contain either all items or paginated results
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub enum ListResponse<T> {
+    /// All items returned without pagination
+    All(Vec<T>),
+    /// Paginated results with metadata
+    Paginated(PaginatedResponse<T>),
+}
+
+impl<T> ListResponse<T> {
+    /// Get the items regardless of response type
+    pub fn items(&self) -> &Vec<T> {
+        match self {
+            Self::All(items) => items,
+            Self::Paginated(response) => &response.items,
+        }
+    }
+
+    /// Get items as owned vector
+    pub fn into_items(self) -> Vec<T> {
+        match self {
+            Self::All(items) => items,
+            Self::Paginated(response) => response.items,
+        }
+    }
+
+    /// Check if this is a paginated response
+    pub fn is_paginated(&self) -> bool {
+        matches!(self, Self::Paginated(_))
+    }
+
+    /// Get pagination metadata if available
+    pub fn pagination_info(&self) -> Option<&PaginatedResponse<T>> {
+        match self {
+            Self::All(_) => None,
+            Self::Paginated(response) => Some(response),
+        }
+    }
+
+    /// Convert to PaginatedResponse (creates artificial pagination for All)
+    pub fn to_paginated_response(self) -> PaginatedResponse<T> {
+        match self {
+            Self::All(items) => {
+                let count = items.len() as u32;
+                PaginatedResponse::new(items, 1, count, count)
+            }
+            Self::Paginated(response) => response,
+        }
+    }
+}
+
+/// Paginated response containing items and metadata
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct PaginatedResponse<T> {
+    /// The items for this page
+    pub items: Vec<T>,
+    /// Current page number
+    pub page: u32,
+    /// Number of items per page
+    pub page_size: u32,
+    /// Total number of items across all pages
+    pub total_count: u32,
+    /// Total number of pages
+    pub total_pages: u32,
+    /// Whether there is a next page
+    pub has_next: bool,
+    /// Whether there is a previous page
+    pub has_previous: bool,
+}
+
+impl<T> PaginatedResponse<T> {
+    /// Create a new paginated response
+    pub fn new(
+        items: Vec<T>,
+        page: u32,
+        page_size: u32,
+        total_count: u32,
+    ) -> Self {
+        let total_pages = if total_count == 0 {
+            1
+        } else {
+            (total_count + page_size - 1) / page_size
+        };
+
+        let has_next = page < total_pages;
+        let has_previous = page > 1;
+
+        Self {
+            items,
+            page,
+            page_size,
+            total_count,
+            total_pages,
+            has_next,
+            has_previous,
+        }
+    }
+}
+
 /// Result type for ledger operations
 pub type LedgerResult<T> = Result<T, LedgerError>;
