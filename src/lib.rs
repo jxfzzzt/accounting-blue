@@ -39,9 +39,9 @@
 //! let pagination = PaginationParams::new(1, 50)?;
 //! let result = ledger.list_accounts(PaginationOption::Paginated(pagination)).await?;
 //! let accounts = result.to_paginated_response();
-//! println!("Total accounts: {}, Current page: {} of {}", 
-//!          accounts.total_count, 
-//!          accounts.page, 
+//! println!("Total accounts: {}, Current page: {} of {}",
+//!          accounts.total_count,
+//!          accounts.page,
 //!          accounts.total_pages);
 //! # Ok(())
 //! # }
@@ -67,10 +67,10 @@
 //! let result = ledger.list_accounts(PaginationOption::Paginated(pagination)).await?;
 //! let result = result.to_paginated_response();
 //!
-//! println!("Page {} of {} (showing {} of {} total accounts)", 
-//!          result.page, 
+//! println!("Page {} of {} (showing {} of {} total accounts)",
+//!          result.page,
 //!          result.total_pages,
-//!          result.items.len(), 
+//!          result.items.len(),
 //!          result.total_count);
 //!
 //! // Check if there are more pages
@@ -106,9 +106,9 @@
 //!
 //! // Get transactions for a specific account with pagination
 //! let account_txns = ledger.get_account_transactions(
-//!     "cash", 
-//!     start_date, 
-//!     end_date, 
+//!     "cash",
+//!     start_date,
+//!     end_date,
 //!     PaginationOption::Paginated(pagination)
 //! ).await?;
 //! # Ok(())
@@ -137,13 +137,13 @@
 //! println!("Total pages: {}", result.total_pages);     // e.g., 3
 //! println!("Has next page: {}", result.has_next);      // true
 //! println!("Has previous page: {}", result.has_previous); // true
-//! 
+//!
 //! // Use metadata to build navigation
 //! if result.has_previous {
 //!     println!("Previous page available");
 //! }
 //! if result.has_next {
-//!     println!("Next page available"); 
+//!     println!("Next page available");
 //! }
 //! # Ok(())
 //! # }

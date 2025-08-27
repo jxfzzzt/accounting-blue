@@ -172,9 +172,7 @@ impl LedgerStorage for MemoryStorage {
             .collect();
 
         // Sort by date descending, then by ID for consistent results
-        filtered.sort_by(|a, b| {
-            b.date.cmp(&a.date).then_with(|| a.id.cmp(&b.id))
-        });
+        filtered.sort_by(|a, b| b.date.cmp(&a.date).then_with(|| a.id.cmp(&b.id)));
 
         match pagination {
             PaginationOption::All => Ok(ListResponse::All(filtered)),
@@ -228,9 +226,7 @@ impl LedgerStorage for MemoryStorage {
             .collect();
 
         // Sort by date descending, then by ID for consistent results
-        filtered.sort_by(|a, b| {
-            b.date.cmp(&a.date).then_with(|| a.id.cmp(&b.id))
-        });
+        filtered.sort_by(|a, b| b.date.cmp(&a.date).then_with(|| a.id.cmp(&b.id)));
 
         match pagination {
             PaginationOption::All => Ok(ListResponse::All(filtered)),
@@ -400,7 +396,7 @@ impl LedgerStorage for MemoryStorage {
         let mut result: HashMap<AccountType, Vec<AccountBalance>> = HashMap::new();
 
         for account_balance in trial_balance.balances.into_values() {
-            let account_type = account_balance.account.account_type.clone();
+            let account_type = account_balance.account.account_type;
             result
                 .entry(account_type)
                 .or_default()

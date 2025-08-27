@@ -76,7 +76,10 @@ impl<S: LedgerStorage + Clone> Ledger<S> {
 
     /// Convenience method: List all accounts without pagination
     pub async fn list_all_accounts(&self) -> LedgerResult<Vec<Account>> {
-        let response = self.account_manager.list_accounts(PaginationOption::All).await?;
+        let response = self
+            .account_manager
+            .list_accounts(PaginationOption::All)
+            .await?;
         Ok(response.into_items())
     }
 
@@ -85,12 +88,12 @@ impl<S: LedgerStorage + Clone> Ledger<S> {
         &self,
         account_type: AccountType,
     ) -> LedgerResult<Vec<Account>> {
-        let response = self.account_manager
+        let response = self
+            .account_manager
             .list_accounts_by_type(account_type, PaginationOption::All)
             .await?;
         Ok(response.into_items())
     }
-
 
     /// Update an account
     pub async fn update_account(&mut self, account: &Account) -> LedgerResult<()> {
@@ -149,7 +152,8 @@ impl<S: LedgerStorage + Clone> Ledger<S> {
         start_date: Option<NaiveDate>,
         end_date: Option<NaiveDate>,
     ) -> LedgerResult<Vec<Transaction>> {
-        let response = self.transaction_manager
+        let response = self
+            .transaction_manager
             .get_account_transactions(account_id, start_date, end_date, PaginationOption::All)
             .await?;
         Ok(response.into_items())
@@ -161,12 +165,12 @@ impl<S: LedgerStorage + Clone> Ledger<S> {
         start_date: Option<NaiveDate>,
         end_date: Option<NaiveDate>,
     ) -> LedgerResult<Vec<Transaction>> {
-        let response = self.transaction_manager
+        let response = self
+            .transaction_manager
             .get_transactions(start_date, end_date, PaginationOption::All)
             .await?;
         Ok(response.into_items())
     }
-
 
     /// Update a transaction
     pub async fn update_transaction(&mut self, transaction: &Transaction) -> LedgerResult<()> {
@@ -545,7 +549,10 @@ mod tests {
 
         // Test pagination with default page size using unified API
         let pagination = PaginationParams::default(); // page: 1, page_size: 50
-        let result = ledger.list_accounts(PaginationOption::Paginated(pagination)).await.unwrap();
+        let result = ledger
+            .list_accounts(PaginationOption::Paginated(pagination))
+            .await
+            .unwrap();
         let result = result.to_paginated_response();
 
         assert_eq!(result.items.len(), 25); // All accounts fit in one page
@@ -564,7 +571,10 @@ mod tests {
 
         // Test pagination with smaller page size using unified API
         let pagination = PaginationParams::new(1, 10).unwrap();
-        let page1_response = ledger.list_accounts(PaginationOption::Paginated(pagination)).await.unwrap();
+        let page1_response = ledger
+            .list_accounts(PaginationOption::Paginated(pagination))
+            .await
+            .unwrap();
         let page1 = page1_response.to_paginated_response();
 
         assert_eq!(page1.items.len(), 10);
@@ -577,7 +587,10 @@ mod tests {
 
         // Test second page
         let pagination = PaginationParams::new(2, 10).unwrap();
-        let page2_response = ledger.list_accounts(PaginationOption::Paginated(pagination)).await.unwrap();
+        let page2_response = ledger
+            .list_accounts(PaginationOption::Paginated(pagination))
+            .await
+            .unwrap();
         let page2 = page2_response.to_paginated_response();
 
         assert_eq!(page2.items.len(), 10);
@@ -588,7 +601,10 @@ mod tests {
 
         // Test last page
         let pagination = PaginationParams::new(3, 10).unwrap();
-        let page3_response = ledger.list_accounts(PaginationOption::Paginated(pagination)).await.unwrap();
+        let page3_response = ledger
+            .list_accounts(PaginationOption::Paginated(pagination))
+            .await
+            .unwrap();
         let page3 = page3_response.to_paginated_response();
 
         assert_eq!(page3.items.len(), 5); // Remaining accounts
@@ -654,13 +670,19 @@ mod tests {
         }
 
         // Test getting all transactions without pagination
-        let all_result = ledger.get_transactions(None, None, PaginationOption::All).await.unwrap();
+        let all_result = ledger
+            .get_transactions(None, None, PaginationOption::All)
+            .await
+            .unwrap();
         assert_eq!(all_result.items().len(), 15);
         assert!(!all_result.is_paginated());
 
         // Test unified API with pagination
         let pagination_option = PaginationOption::Paginated(PaginationParams::new(1, 5).unwrap());
-        let unified_result = ledger.get_transactions(None, None, pagination_option).await.unwrap();
+        let unified_result = ledger
+            .get_transactions(None, None, pagination_option)
+            .await
+            .unwrap();
         assert!(unified_result.is_paginated());
         assert_eq!(unified_result.items().len(), 5);
 
@@ -689,7 +711,12 @@ mod tests {
         // Test account-specific transactions pagination
         let pagination = PaginationParams::new(1, 10).unwrap();
         let account_result_response = ledger
-            .get_account_transactions(&cash_account.id, None, None, PaginationOption::Paginated(pagination))
+            .get_account_transactions(
+                &cash_account.id,
+                None,
+                None,
+                PaginationOption::Paginated(pagination),
+            )
             .await
             .unwrap();
         let account_result = account_result_response.to_paginated_response();
@@ -699,10 +726,7 @@ mod tests {
 
         // All transactions should affect the cash account
         for txn in &account_result.items {
-            assert!(txn
-                .entries
-                .iter()
-                .any(|e| e.account_id == cash_account.id));
+            assert!(txn.entries.iter().any(|e| e.account_id == cash_account.id));
         }
     }
 
@@ -753,12 +777,12 @@ mod tests {
         }
 
         // Test that single unified method can handle both cases
-        
+
         // Case 1: Get all items (no pagination)
         let all_accounts = ledger.list_accounts(PaginationOption::All).await.unwrap();
         assert!(!all_accounts.is_paginated());
         assert_eq!(all_accounts.items().len(), 10);
-        
+
         // Case 2: Get paginated results
         let pagination = PaginationParams::new(1, 5).unwrap();
         let paginated_accounts = ledger
@@ -767,14 +791,14 @@ mod tests {
             .unwrap();
         assert!(paginated_accounts.is_paginated());
         assert_eq!(paginated_accounts.items().len(), 5);
-        
+
         // Test conversion to PaginatedResponse for API compatibility
         let paginated_response = all_accounts.to_paginated_response();
         assert_eq!(paginated_response.items.len(), 10);
         assert_eq!(paginated_response.total_count, 10);
         assert_eq!(paginated_response.page, 1);
         assert_eq!(paginated_response.total_pages, 1);
-        
+
         // Test convenience methods still work
         let convenience_all = ledger.list_all_accounts().await.unwrap();
         assert_eq!(convenience_all.len(), 10);

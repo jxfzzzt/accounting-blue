@@ -90,7 +90,9 @@ impl<S: LedgerStorage> AccountManager<S> {
         account_type: AccountType,
         pagination: PaginationOption,
     ) -> LedgerResult<ListResponse<Account>> {
-        self.storage.list_accounts(Some(account_type), pagination).await
+        self.storage
+            .list_accounts(Some(account_type), pagination)
+            .await
     }
 
     /// Update an account
@@ -148,7 +150,10 @@ impl<S: LedgerStorage> StandardChartOfAccounts<S> {
 #[async_trait::async_trait]
 impl<S: LedgerStorage> ChartOfAccounts for StandardChartOfAccounts<S> {
     async fn get_chart(&self) -> LedgerResult<Vec<Account>> {
-        let response = self.account_manager.list_accounts(PaginationOption::All).await?;
+        let response = self
+            .account_manager
+            .list_accounts(PaginationOption::All)
+            .await?;
         Ok(response.into_items())
     }
 
@@ -157,7 +162,10 @@ impl<S: LedgerStorage> ChartOfAccounts for StandardChartOfAccounts<S> {
     }
 
     async fn get_child_accounts(&self, parent_id: &str) -> LedgerResult<Vec<Account>> {
-        let all_accounts = self.account_manager.list_accounts(PaginationOption::All).await?;
+        let all_accounts = self
+            .account_manager
+            .list_accounts(PaginationOption::All)
+            .await?;
         Ok(all_accounts
             .into_items()
             .into_iter()

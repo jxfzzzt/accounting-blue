@@ -394,7 +394,10 @@ async fn test_memory_storage_operations() {
     assert!(retrieved.is_some());
     assert_eq!(retrieved.unwrap().name, "Test Account");
 
-    let all_accounts = storage.list_accounts(None, PaginationOption::All).await.unwrap();
+    let all_accounts = storage
+        .list_accounts(None, PaginationOption::All)
+        .await
+        .unwrap();
     assert_eq!(all_accounts.into_items().len(), 1);
 
     // Test transaction operations

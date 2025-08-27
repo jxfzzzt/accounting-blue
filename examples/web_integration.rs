@@ -4,8 +4,7 @@
 //! including error handling, query parameter parsing, and response formatting.
 
 use accounting_core::{
-    AccountType, Ledger, PaginationOption, PaginationParams,
-    utils::memory_storage::MemoryStorage,
+    utils::memory_storage::MemoryStorage, AccountType, Ledger, PaginationOption, PaginationParams,
 };
 use serde::{Deserialize, Serialize};
 
@@ -15,7 +14,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let storage = MemoryStorage::new();
     let mut ledger = Ledger::new(storage);
-    
+
     // Create sample data
     create_sample_data(&mut ledger).await?;
 
@@ -23,11 +22,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     axum_style_handlers(&ledger).await?;
     actix_style_handlers(&ledger).await?;
     warp_style_handlers(&ledger).await?;
-    
+
     Ok(())
 }
 
-async fn create_sample_data(ledger: &mut Ledger<MemoryStorage>) -> Result<(), Box<dyn std::error::Error>> {
+async fn create_sample_data(
+    ledger: &mut Ledger<MemoryStorage>,
+) -> Result<(), Box<dyn std::error::Error>> {
     // Create 15 sample accounts for demonstration
     let accounts = [
         ("cash", "Cash Account", AccountType::Asset),
@@ -35,7 +36,11 @@ async fn create_sample_data(ledger: &mut Ledger<MemoryStorage>) -> Result<(), Bo
         ("inventory", "Inventory", AccountType::Asset),
         ("equipment", "Office Equipment", AccountType::Asset),
         ("building", "Office Building", AccountType::Asset),
-        ("accounts_payable", "Accounts Payable", AccountType::Liability),
+        (
+            "accounts_payable",
+            "Accounts Payable",
+            AccountType::Liability,
+        ),
         ("loan", "Business Loan", AccountType::Liability),
         ("mortgage", "Building Mortgage", AccountType::Liability),
         ("equity", "Owner's Equity", AccountType::Equity),
@@ -48,25 +53,24 @@ async fn create_sample_data(ledger: &mut Ledger<MemoryStorage>) -> Result<(), Bo
     ];
 
     for (id, name, account_type) in accounts {
-        ledger.create_account(
-            id.to_string(),
-            name.to_string(),
-            account_type,
-            None,
-        ).await?;
+        ledger
+            .create_account(id.to_string(), name.to_string(), account_type, None)
+            .await?;
     }
 
     Ok(())
 }
 
 /// Axum-style request handlers
-async fn axum_style_handlers(ledger: &Ledger<MemoryStorage>) -> Result<(), Box<dyn std::error::Error>> {
+async fn axum_style_handlers(
+    ledger: &Ledger<MemoryStorage>,
+) -> Result<(), Box<dyn std::error::Error>> {
     println!("🦀 Axum-Style Handler Examples");
     println!("{}", "=".repeat(40));
 
     // Simulate Axum query parameters
     println!("\n📞 GET /accounts?page=2&per_page=5&type=asset");
-    
+
     let query_params = AxumAccountsQuery {
         page: Some(2),
         per_page: Some(5),
@@ -88,7 +92,7 @@ async fn axum_style_handlers(ledger: &Ledger<MemoryStorage>) -> Result<(), Box<d
 
     // Test error handling
     println!("\n📞 GET /accounts?page=0&per_page=5 (invalid)");
-    
+
     let bad_query = AxumAccountsQuery {
         page: Some(0), // Invalid page
         per_page: Some(5),
@@ -109,13 +113,15 @@ async fn axum_style_handlers(ledger: &Ledger<MemoryStorage>) -> Result<(), Box<d
 }
 
 /// Actix Web-style request handlers  
-async fn actix_style_handlers(ledger: &Ledger<MemoryStorage>) -> Result<(), Box<dyn std::error::Error>> {
+async fn actix_style_handlers(
+    ledger: &Ledger<MemoryStorage>,
+) -> Result<(), Box<dyn std::error::Error>> {
     println!("\n\n🕸️  Actix Web-Style Handler Examples");
     println!("{}", "=".repeat(40));
 
     // Simulate Actix web::Query
     println!("\n📞 GET /api/accounts?page=1&limit=10");
-    
+
     let query = ActixQuery {
         page: 1,
         limit: 10,
@@ -126,7 +132,7 @@ async fn actix_style_handlers(ledger: &Ledger<MemoryStorage>) -> Result<(), Box<
     println!("✅ Status: 200 OK");
     println!("📦 Headers: X-Total-Count: {}", response.total);
     println!("📦 Body: {} accounts returned", response.accounts.len());
-    
+
     // Show first few accounts
     for account in response.accounts.iter().take(3) {
         println!("   • {} - {}", account.code, account.name);
@@ -134,7 +140,7 @@ async fn actix_style_handlers(ledger: &Ledger<MemoryStorage>) -> Result<(), Box<
 
     // Test with filtering
     println!("\n📞 GET /api/accounts?page=1&limit=5&filter=liability");
-    
+
     let query = ActixQuery {
         page: 1,
         limit: 5,
@@ -142,39 +148,44 @@ async fn actix_style_handlers(ledger: &Ledger<MemoryStorage>) -> Result<(), Box<
     };
 
     let response = actix_get_accounts(ledger, query).await?;
-    println!("✅ Status: 200 OK");  
-    println!("📦 Filtered results: {} liability accounts", response.accounts.len());
+    println!("✅ Status: 200 OK");
+    println!(
+        "📦 Filtered results: {} liability accounts",
+        response.accounts.len()
+    );
 
     Ok(())
 }
 
 /// Warp-style request handlers
-async fn warp_style_handlers(ledger: &Ledger<MemoryStorage>) -> Result<(), Box<dyn std::error::Error>> {
+async fn warp_style_handlers(
+    ledger: &Ledger<MemoryStorage>,
+) -> Result<(), Box<dyn std::error::Error>> {
     println!("\n\n🌊 Warp-Style Handler Examples");
     println!("{}", "=".repeat(40));
 
     // Simulate Warp query parameters
     println!("\n📞 GET /accounts?offset=5&limit=3&type=income");
-    
+
     let params = WarpQueryParams {
         offset: Some(5),
-        limit: Some(3), 
+        limit: Some(3),
         account_type: Some("income".to_string()),
     };
 
     let response = warp_accounts_handler(ledger, params).await?;
-    
+
     println!("✅ Status: 200 OK");
     println!("📦 Response Headers:");
     println!("   X-Total-Count: {}", response.meta.total);
     println!("   X-Page-Count: {}", response.meta.page_count);
-    
+
     println!("📦 Response Body:");
     for account in &response.data {
-        println!("   💰 {} - {} (Balance: ${})", 
-                 account.id, 
-                 account.name, 
-                 account.current_balance);
+        println!(
+            "   💰 {} - {} (Balance: ${})",
+            account.id, account.name, account.current_balance
+        );
     }
 
     Ok(())
@@ -223,26 +234,35 @@ async fn axum_list_accounts(
 ) -> Result<AxumAccountsResponse, String> {
     let page = query.page.unwrap_or(1);
     let per_page = query.per_page.unwrap_or(20);
-    
+
     let pagination = PaginationParams::new(page, per_page)
         .map_err(|e| format!("Invalid pagination parameters: {}", e))?;
 
     let result = if let Some(type_str) = query.account_type {
-        let account_type = parse_account_type(&type_str)
-            .map_err(|e| format!("Invalid account type: {}", e))?;
-        ledger.list_accounts_by_type(account_type, PaginationOption::Paginated(pagination)).await
+        let account_type =
+            parse_account_type(&type_str).map_err(|e| format!("Invalid account type: {}", e))?;
+        ledger
+            .list_accounts_by_type(account_type, PaginationOption::Paginated(pagination))
+            .await
     } else {
-        ledger.list_accounts(PaginationOption::Paginated(pagination)).await
-    }.map_err(|e| format!("Database error: {}", e))?;
+        ledger
+            .list_accounts(PaginationOption::Paginated(pagination))
+            .await
+    }
+    .map_err(|e| format!("Database error: {}", e))?;
 
     let result = result.to_paginated_response();
-    let data = result.items.into_iter().map(|account| AxumAccountDto {
-        id: account.id,
-        name: account.name,
-        account_type: format!("{:?}", account.account_type),
-        balance: account.balance.to_string(),
-        created_at: account.created_at.format("%Y-%m-%d %H:%M:%S").to_string(),
-    }).collect();
+    let data = result
+        .items
+        .into_iter()
+        .map(|account| AxumAccountDto {
+            id: account.id,
+            name: account.name,
+            account_type: format!("{:?}", account.account_type),
+            balance: account.balance.to_string(),
+            created_at: account.created_at.format("%Y-%m-%d %H:%M:%S").to_string(),
+        })
+        .collect();
 
     Ok(AxumAccountsResponse {
         data,
@@ -287,21 +307,29 @@ async fn actix_get_accounts(
     query: ActixQuery,
 ) -> Result<ActixAccountsResponse, Box<dyn std::error::Error>> {
     let pagination = PaginationParams::new(query.page, query.limit)?;
-    
+
     let result = if let Some(filter) = query.filter {
         let account_type = parse_account_type(&filter)?;
-        ledger.list_accounts_by_type(account_type, PaginationOption::Paginated(pagination)).await?
+        ledger
+            .list_accounts_by_type(account_type, PaginationOption::Paginated(pagination))
+            .await?
     } else {
-        ledger.list_accounts(PaginationOption::Paginated(pagination)).await?
+        ledger
+            .list_accounts(PaginationOption::Paginated(pagination))
+            .await?
     };
     let result = result.to_paginated_response();
 
-    let accounts = result.items.into_iter().map(|account| ActixAccountDto {
-        code: account.id,
-        name: account.name,
-        type_name: format!("{:?}", account.account_type),
-        balance: account.balance.to_string().parse().unwrap_or(0.0),
-    }).collect();
+    let accounts = result
+        .items
+        .into_iter()
+        .map(|account| ActixAccountDto {
+            code: account.id,
+            name: account.name,
+            type_name: format!("{:?}", account.account_type),
+            balance: account.balance.to_string().parse().unwrap_or(0.0),
+        })
+        .collect();
 
     Ok(ActixAccountsResponse {
         accounts,
@@ -312,7 +340,7 @@ async fn actix_get_accounts(
     })
 }
 
-// Warp-style types and handlers  
+// Warp-style types and handlers
 #[derive(Debug, Deserialize)]
 struct WarpQueryParams {
     offset: Option<u32>,
@@ -335,7 +363,7 @@ struct WarpAccountDto {
     current_balance: String,
 }
 
-#[derive(Debug, Serialize)] 
+#[derive(Debug, Serialize)]
 struct WarpMeta {
     total: u32,
     offset: u32,
@@ -349,25 +377,33 @@ async fn warp_accounts_handler(
 ) -> Result<WarpAccountsResponse, Box<dyn std::error::Error>> {
     let limit = params.limit.unwrap_or(50);
     let offset = params.offset.unwrap_or(0);
-    
+
     // Convert offset to page number
     let page = (offset / limit) + 1;
     let pagination = PaginationParams::new(page, limit)?;
 
     let result = if let Some(type_str) = params.account_type {
         let account_type = parse_account_type(&type_str)?;
-        ledger.list_accounts_by_type(account_type, PaginationOption::Paginated(pagination)).await?
+        ledger
+            .list_accounts_by_type(account_type, PaginationOption::Paginated(pagination))
+            .await?
     } else {
-        ledger.list_accounts(PaginationOption::Paginated(pagination)).await?
+        ledger
+            .list_accounts(PaginationOption::Paginated(pagination))
+            .await?
     };
     let result = result.to_paginated_response();
 
-    let data = result.items.into_iter().map(|account| WarpAccountDto {
-        id: account.id,
-        name: account.name,
-        type_code: account_type_to_code(&account.account_type),
-        current_balance: account.balance.to_string(),
-    }).collect();
+    let data = result
+        .items
+        .into_iter()
+        .map(|account| WarpAccountDto {
+            id: account.id,
+            name: account.name,
+            type_code: account_type_to_code(&account.account_type),
+            current_balance: account.balance.to_string(),
+        })
+        .collect();
 
     Ok(WarpAccountsResponse {
         data,

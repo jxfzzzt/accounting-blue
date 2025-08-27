@@ -116,7 +116,9 @@ impl<S: LedgerStorage> TransactionManager<S> {
         end_date: Option<NaiveDate>,
         pagination: PaginationOption,
     ) -> LedgerResult<ListResponse<Transaction>> {
-        self.storage.get_transactions(start_date, end_date, pagination).await
+        self.storage
+            .get_transactions(start_date, end_date, pagination)
+            .await
     }
 
     /// Update a transaction (requires reversing old entries and applying new ones)

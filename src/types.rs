@@ -331,10 +331,14 @@ impl PaginationParams {
     /// Create new pagination parameters with validation
     pub fn new(page: u32, page_size: u32) -> LedgerResult<Self> {
         if page < 1 {
-            return Err(LedgerError::Validation("Page must be 1 or greater".to_string()));
+            return Err(LedgerError::Validation(
+                "Page must be 1 or greater".to_string(),
+            ));
         }
         if !(1..=1000).contains(&page_size) {
-            return Err(LedgerError::Validation("Page size must be between 1 and 1000".to_string()));
+            return Err(LedgerError::Validation(
+                "Page size must be between 1 and 1000".to_string(),
+            ));
         }
         Ok(Self { page, page_size })
     }
@@ -431,12 +435,7 @@ pub struct PaginatedResponse<T> {
 
 impl<T> PaginatedResponse<T> {
     /// Create a new paginated response
-    pub fn new(
-        items: Vec<T>,
-        page: u32,
-        page_size: u32,
-        total_count: u32,
-    ) -> Self {
+    pub fn new(items: Vec<T>, page: u32, page_size: u32, total_count: u32) -> Self {
         let total_pages = if total_count == 0 {
             1
         } else {

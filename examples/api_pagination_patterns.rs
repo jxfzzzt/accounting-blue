@@ -4,8 +4,8 @@
 //! handle query parameters, and build efficient data access patterns.
 
 use accounting_core::{
-    Account, AccountType, Ledger, PaginationOption, PaginationParams,
-    utils::memory_storage::MemoryStorage,
+    utils::memory_storage::MemoryStorage, Account, AccountType, Ledger, PaginationOption,
+    PaginationParams,
 };
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -29,7 +29,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 /// Setup sample accounts for API demonstrations
-async fn setup_sample_accounts(ledger: &mut Ledger<MemoryStorage>) -> Result<(), Box<dyn std::error::Error>> {
+async fn setup_sample_accounts(
+    ledger: &mut Ledger<MemoryStorage>,
+) -> Result<(), Box<dyn std::error::Error>> {
     // Create a realistic chart of accounts
     let accounts = [
         // Assets
@@ -38,25 +40,29 @@ async fn setup_sample_accounts(ledger: &mut Ledger<MemoryStorage>) -> Result<(),
         ("1100", "Accounts Receivable", AccountType::Asset),
         ("1200", "Inventory", AccountType::Asset),
         ("1500", "Equipment", AccountType::Asset),
-        ("1510", "Accumulated Depreciation - Equipment", AccountType::Asset),
+        (
+            "1510",
+            "Accumulated Depreciation - Equipment",
+            AccountType::Asset,
+        ),
         ("1600", "Building", AccountType::Asset),
-        ("1610", "Accumulated Depreciation - Building", AccountType::Asset),
-        
+        (
+            "1610",
+            "Accumulated Depreciation - Building",
+            AccountType::Asset,
+        ),
         // Liabilities
         ("2000", "Accounts Payable", AccountType::Liability),
         ("2100", "Short-term Loan", AccountType::Liability),
         ("2200", "Long-term Loan", AccountType::Liability),
         ("2300", "Accrued Expenses", AccountType::Liability),
-        
         // Equity
         ("3000", "Owner's Capital", AccountType::Equity),
         ("3100", "Retained Earnings", AccountType::Equity),
-        
         // Income
         ("4000", "Sales Revenue", AccountType::Income),
         ("4100", "Service Revenue", AccountType::Income),
         ("4200", "Interest Income", AccountType::Income),
-        
         // Expenses
         ("5000", "Cost of Goods Sold", AccountType::Expense),
         ("5100", "Rent Expense", AccountType::Expense),
@@ -69,12 +75,9 @@ async fn setup_sample_accounts(ledger: &mut Ledger<MemoryStorage>) -> Result<(),
     ];
 
     for (id, name, account_type) in &accounts {
-        ledger.create_account(
-            id.to_string(),
-            name.to_string(),
-            *account_type,
-            None,
-        ).await?;
+        ledger
+            .create_account(id.to_string(), name.to_string(), *account_type, None)
+            .await?;
     }
 
     println!("✅ Created {} sample accounts", accounts.len());
@@ -82,40 +85,55 @@ async fn setup_sample_accounts(ledger: &mut Ledger<MemoryStorage>) -> Result<(),
 }
 
 /// Simulate REST API request/response patterns
-async fn rest_api_simulation(ledger: &Ledger<MemoryStorage>) -> Result<(), Box<dyn std::error::Error>> {
+async fn rest_api_simulation(
+    ledger: &Ledger<MemoryStorage>,
+) -> Result<(), Box<dyn std::error::Error>> {
     println!("🔄 REST API Simulation\n");
 
     // Example 1: GET /api/accounts?page=1&limit=10&type=asset
     println!("📞 Request: GET /api/accounts?page=1&limit=10&type=asset");
-    let result = api_get_accounts(ledger, ApiAccountsQuery {
-        page: Some(1),
-        limit: Some(10),
-        account_type: Some("asset".to_string()),
-    }).await?;
-    
+    let result = api_get_accounts(
+        ledger,
+        ApiAccountsQuery {
+            page: Some(1),
+            limit: Some(10),
+            account_type: Some("asset".to_string()),
+        },
+    )
+    .await?;
+
     println!("📤 Response:");
     println!("{}", serde_json::to_string_pretty(&result)?);
-    
+
     println!("\n{}\n", "─".repeat(60));
 
     // Example 2: GET /api/accounts?page=2&limit=5
     println!("📞 Request: GET /api/accounts?page=2&limit=5");
-    let result = api_get_accounts(ledger, ApiAccountsQuery {
-        page: Some(2),
-        limit: Some(5),
-        account_type: None,
-    }).await?;
-    
+    let result = api_get_accounts(
+        ledger,
+        ApiAccountsQuery {
+            page: Some(2),
+            limit: Some(5),
+            account_type: None,
+        },
+    )
+    .await?;
+
     println!("📤 Response (metadata only):");
     println!("   Total: {}", result.meta.total);
-    println!("   Page: {} of {}", result.meta.page, result.meta.total_pages);
+    println!(
+        "   Page: {} of {}",
+        result.meta.page, result.meta.total_pages
+    );
     println!("   Items: {}", result.data.len());
 
     Ok(())
 }
 
 /// Simulate GraphQL-style pagination
-async fn graphql_pagination_pattern(ledger: &Ledger<MemoryStorage>) -> Result<(), Box<dyn std::error::Error>> {
+async fn graphql_pagination_pattern(
+    ledger: &Ledger<MemoryStorage>,
+) -> Result<(), Box<dyn std::error::Error>> {
     println!("🔍 GraphQL Pagination Pattern\n");
 
     // Simulate cursor-based pagination query
@@ -125,13 +143,17 @@ async fn graphql_pagination_pattern(ledger: &Ledger<MemoryStorage>) -> Result<()
     println!("     pageInfo {{ hasNextPage, hasPreviousPage }}");
     println!("   }}");
 
-    let result = graphql_get_accounts(ledger, GraphQLAccountsQuery {
-        first: Some(5),
-        after: None,
-        filter: Some(GraphQLAccountFilter {
-            account_type: Some("EXPENSE".to_string()),
-        }),
-    }).await?;
+    let result = graphql_get_accounts(
+        ledger,
+        GraphQLAccountsQuery {
+            first: Some(5),
+            after: None,
+            filter: Some(GraphQLAccountFilter {
+                account_type: Some("EXPENSE".to_string()),
+            }),
+        },
+    )
+    .await?;
 
     println!("\n📤 GraphQL Response:");
     println!("{}", serde_json::to_string_pretty(&result)?);
@@ -140,7 +162,9 @@ async fn graphql_pagination_pattern(ledger: &Ledger<MemoryStorage>) -> Result<()
 }
 
 /// Simulate infinite scroll pagination
-async fn infinite_scroll_pattern(ledger: &Ledger<MemoryStorage>) -> Result<(), Box<dyn std::error::Error>> {
+async fn infinite_scroll_pattern(
+    ledger: &Ledger<MemoryStorage>,
+) -> Result<(), Box<dyn std::error::Error>> {
     println!("♾️  Infinite Scroll Pattern\n");
 
     let mut loaded_items = 0;
@@ -149,28 +173,32 @@ async fn infinite_scroll_pattern(ledger: &Ledger<MemoryStorage>) -> Result<(), B
     // Simulate loading 3 batches
     for batch in 1..=3 {
         println!("📱 Loading batch {} (infinite scroll):", batch);
-        
+
         let pagination = PaginationParams::new(batch, batch_size)?;
-        let result = ledger.list_accounts(PaginationOption::Paginated(pagination)).await?;
+        let result = ledger
+            .list_accounts(PaginationOption::Paginated(pagination))
+            .await?;
         let result = result.to_paginated_response();
-        
+
         loaded_items += result.items.len();
-        
-        println!("   ↓ Loaded {} items (total: {}/{})", 
-                 result.items.len(), 
-                 loaded_items, 
-                 result.total_count);
-        
+
+        println!(
+            "   ↓ Loaded {} items (total: {}/{})",
+            result.items.len(),
+            loaded_items,
+            result.total_count
+        );
+
         // Show last 2 items in this batch
         for account in result.items.iter().rev().take(2).rev() {
             println!("     • {} - {}", account.id, account.name);
         }
-        
+
         if !result.has_next {
             println!("   ✅ All items loaded!");
             break;
         }
-        
+
         println!("   📜 Scroll for more...\n");
     }
 
@@ -178,7 +206,9 @@ async fn infinite_scroll_pattern(ledger: &Ledger<MemoryStorage>) -> Result<(), B
 }
 
 /// Simulate data table pagination with sorting and filtering
-async fn table_pagination_pattern(ledger: &Ledger<MemoryStorage>) -> Result<(), Box<dyn std::error::Error>> {
+async fn table_pagination_pattern(
+    ledger: &Ledger<MemoryStorage>,
+) -> Result<(), Box<dyn std::error::Error>> {
     println!("📊 Data Table Pagination\n");
 
     // Simulate table request with sorting and filtering
@@ -195,8 +225,14 @@ async fn table_pagination_pattern(ledger: &Ledger<MemoryStorage>) -> Result<(), 
     };
 
     println!("🗂️  Table Request:");
-    println!("   Page: {}, Size: {}", table_request.page, table_request.page_size);
-    println!("   Sort: {} {}", table_request.sort_by, table_request.sort_order);
+    println!(
+        "   Page: {}, Size: {}",
+        table_request.page, table_request.page_size
+    );
+    println!(
+        "   Sort: {} {}",
+        table_request.sort_by, table_request.sort_order
+    );
     println!("   Filters: {:?}", table_request.filters);
 
     let result = process_table_request(ledger, table_request).await?;
@@ -205,20 +241,24 @@ async fn table_pagination_pattern(ledger: &Ledger<MemoryStorage>) -> Result<(), 
     println!("┌─────────┬──────────────────────────────┬─────────────┐");
     println!("│ Account │ Name                         │ Type        │");
     println!("├─────────┼──────────────────────────────┼─────────────┤");
-    
+
     for account in &result.data {
-        println!("│ {:7} │ {:28} │ {:11} │", 
-                 account.id, 
-                 &account.name[..std::cmp::min(account.name.len(), 28)],
-                 format!("{:?}", account.account_type));
+        println!(
+            "│ {:7} │ {:28} │ {:11} │",
+            account.id,
+            &account.name[..std::cmp::min(account.name.len(), 28)],
+            format!("{:?}", account.account_type)
+        );
     }
-    
+
     println!("└─────────┴──────────────────────────────┴─────────────┘");
-    println!("Showing {} of {} items | Page {} of {}", 
-             result.data.len(),
-             result.pagination.total_items,
-             result.pagination.current_page,
-             result.pagination.total_pages);
+    println!(
+        "Showing {} of {} items | Page {} of {}",
+        result.data.len(),
+        result.pagination.total_items,
+        result.pagination.current_page,
+        result.pagination.total_pages
+    );
 
     Ok(())
 }
@@ -328,8 +368,8 @@ struct TablePaginationInfo {
 // API Implementation Functions
 
 async fn api_get_accounts(
-    ledger: &Ledger<MemoryStorage>, 
-    query: ApiAccountsQuery
+    ledger: &Ledger<MemoryStorage>,
+    query: ApiAccountsQuery,
 ) -> Result<ApiAccountsResponse, Box<dyn std::error::Error>> {
     let page = query.page.unwrap_or(1);
     let limit = query.limit.unwrap_or(20);
@@ -344,18 +384,26 @@ async fn api_get_accounts(
             "expense" => AccountType::Expense,
             _ => return Err("Invalid account type".into()),
         };
-        ledger.list_accounts_by_type(account_type, PaginationOption::Paginated(pagination)).await?
+        ledger
+            .list_accounts_by_type(account_type, PaginationOption::Paginated(pagination))
+            .await?
     } else {
-        ledger.list_accounts(PaginationOption::Paginated(pagination)).await?
+        ledger
+            .list_accounts(PaginationOption::Paginated(pagination))
+            .await?
     };
     let result = result.to_paginated_response();
 
-    let data = result.items.into_iter().map(|account| AccountDto {
-        id: account.id,
-        name: account.name,
-        account_type: format!("{:?}", account.account_type).to_lowercase(),
-        balance: account.balance.to_string(),
-    }).collect();
+    let data = result
+        .items
+        .into_iter()
+        .map(|account| AccountDto {
+            id: account.id,
+            name: account.name,
+            account_type: format!("{:?}", account.account_type).to_lowercase(),
+            balance: account.balance.to_string(),
+        })
+        .collect();
 
     Ok(ApiAccountsResponse {
         data,
@@ -376,9 +424,9 @@ async fn graphql_get_accounts(
 ) -> Result<GraphQLAccountsResponse, Box<dyn std::error::Error>> {
     let first = query.first.unwrap_or(10);
     let page = 1; // In a real implementation, you'd decode the cursor
-    
+
     let pagination = PaginationParams::new(page, first)?;
-    
+
     let result = if let Some(filter) = query.filter {
         if let Some(type_str) = filter.account_type {
             let account_type = match type_str.as_str() {
@@ -389,23 +437,33 @@ async fn graphql_get_accounts(
                 "EXPENSE" => AccountType::Expense,
                 _ => return Err("Invalid account type".into()),
             };
-            ledger.list_accounts_by_type(account_type, PaginationOption::Paginated(pagination)).await?
+            ledger
+                .list_accounts_by_type(account_type, PaginationOption::Paginated(pagination))
+                .await?
         } else {
-            ledger.list_accounts(PaginationOption::Paginated(pagination)).await?
+            ledger
+                .list_accounts(PaginationOption::Paginated(pagination))
+                .await?
         }
     } else {
-        ledger.list_accounts(PaginationOption::Paginated(pagination)).await?
+        ledger
+            .list_accounts(PaginationOption::Paginated(pagination))
+            .await?
     };
     let result = result.to_paginated_response();
 
-    let edges = result.items.into_iter().map(|account| GraphQLAccountEdge {
-        node: AccountDto {
-            id: account.id,
-            name: account.name,
-            account_type: format!("{:?}", account.account_type),
-            balance: account.balance.to_string(),
-        }
-    }).collect();
+    let edges = result
+        .items
+        .into_iter()
+        .map(|account| GraphQLAccountEdge {
+            node: AccountDto {
+                id: account.id,
+                name: account.name,
+                account_type: format!("{:?}", account.account_type),
+                balance: account.balance.to_string(),
+            },
+        })
+        .collect();
 
     Ok(GraphQLAccountsResponse {
         data: GraphQLAccountsData {
@@ -435,9 +493,13 @@ async fn process_table_request(
             "expense" => AccountType::Expense,
             _ => return Err("Invalid account type filter".into()),
         };
-        ledger.list_accounts_by_type(account_type, PaginationOption::Paginated(pagination)).await?
+        ledger
+            .list_accounts_by_type(account_type, PaginationOption::Paginated(pagination))
+            .await?
     } else {
-        ledger.list_accounts(PaginationOption::Paginated(pagination)).await?
+        ledger
+            .list_accounts(PaginationOption::Paginated(pagination))
+            .await?
     };
     let result = result.to_paginated_response();
 
