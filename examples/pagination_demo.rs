@@ -205,7 +205,7 @@ async fn basic_account_pagination(ledger: &Ledger<MemoryStorage>) -> Result<(), 
     println!("   Page: {} of {}", result.page, result.total_pages);
     
     for account in &result.items {
-        println!("   • {} - {} ({})", account.id, account.name, format!("{:?}", account.account_type));
+        println!("   • {} - {} ({:?})", account.id, account.name, account.account_type);
     }
 
     Ok(())
@@ -489,6 +489,7 @@ async fn pagination_ui_helper(ledger: &Ledger<MemoryStorage>) -> Result<(), Box<
 
 // Helper structures for UI examples
 #[derive(Debug)]
+#[allow(dead_code)]
 struct TransactionSummary {
     id: String,
     date: NaiveDate,
@@ -497,6 +498,7 @@ struct TransactionSummary {
 }
 
 #[derive(Debug)]
+#[allow(dead_code)]
 struct PaginationInfo {
     current_page: u32,
     total_pages: u32,
@@ -519,13 +521,13 @@ fn build_navigation_info<T>(result: &accounting_core::PaginatedResponse<T>) -> S
     let mut parts = Vec::new();
     
     if result.has_previous {
-        parts.push(format!("← Prev"));
+        parts.push("← Prev".to_string());
     }
     
     parts.push(format!("Page {} of {}", result.page, result.total_pages));
     
     if result.has_next {
-        parts.push(format!("Next →"));
+        parts.push("Next →".to_string());
     }
     
     parts.join(" | ")
@@ -537,7 +539,7 @@ fn generate_pagination_controls(info: &PaginationInfo) -> String {
     
     // Previous button
     if info.has_previous {
-        controls.push(format!("[← Previous]"));
+        controls.push("[← Previous]".to_string());
     } else {
         controls.push("[Previous]".to_string());
     }
@@ -570,7 +572,7 @@ fn generate_pagination_controls(info: &PaginationInfo) -> String {
     
     // Next button
     if info.has_next {
-        controls.push(format!("[Next →]"));
+        controls.push("[Next →]".to_string());
     } else {
         controls.push("[Next]".to_string());
     }

@@ -182,6 +182,7 @@ async fn warp_style_handlers(ledger: &Ledger<MemoryStorage>) -> Result<(), Box<d
 
 // Axum-style types and handlers
 #[derive(Debug, Deserialize)]
+#[allow(dead_code)]
 struct AxumAccountsQuery {
     page: Option<u32>,
     per_page: Option<u32>,

@@ -258,6 +258,7 @@ struct ApiPaginationMeta {
 
 // GraphQL structures
 #[derive(Debug, Deserialize)]
+#[allow(dead_code)]
 struct GraphQLAccountsQuery {
     first: Option<u32>,
     after: Option<String>,
@@ -316,6 +317,7 @@ struct TableResponse {
 }
 
 #[derive(Debug)]
+#[allow(dead_code)]
 struct TablePaginationInfo {
     current_page: u32,
     total_pages: u32,

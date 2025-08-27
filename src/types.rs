@@ -333,7 +333,7 @@ impl PaginationParams {
         if page < 1 {
             return Err(LedgerError::Validation("Page must be 1 or greater".to_string()));
         }
-        if page_size < 1 || page_size > 1000 {
+        if !(1..=1000).contains(&page_size) {
             return Err(LedgerError::Validation("Page size must be between 1 and 1000".to_string()));
         }
         Ok(Self { page, page_size })
@@ -440,7 +440,7 @@ impl<T> PaginatedResponse<T> {
         let total_pages = if total_count == 0 {
             1
         } else {
-            (total_count + page_size - 1) / page_size
+            total_count.div_ceil(page_size)
         };
 
         let has_next = page < total_pages;
