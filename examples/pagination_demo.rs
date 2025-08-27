@@ -387,7 +387,7 @@ async fn pagination_navigation_helpers(ledger: &Ledger<MemoryStorage>) -> Result
             break;
         }
         
-        if !result.has_next {
+        if !paginated_result.has_next {
             break;
         }
         

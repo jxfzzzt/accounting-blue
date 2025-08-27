@@ -151,7 +151,8 @@ async fn infinite_scroll_pattern(ledger: &Ledger<MemoryStorage>) -> Result<(), B
         println!("📱 Loading batch {} (infinite scroll):", batch);
         
         let pagination = PaginationParams::new(batch, batch_size)?;
-        let result = ledger.list_accounts_paginated(pagination).await?;
+        let result = ledger.list_accounts(PaginationOption::Paginated(pagination)).await?;
+        let result = result.to_paginated_response();
         
         loaded_items += result.items.len();
         
@@ -345,6 +346,7 @@ async fn api_get_accounts(
     } else {
         ledger.list_accounts(PaginationOption::Paginated(pagination)).await?
     };
+    let result = result.to_paginated_response();
 
     let data = result.items.into_iter().map(|account| AccountDto {
         id: account.id,
@@ -392,6 +394,7 @@ async fn graphql_get_accounts(
     } else {
         ledger.list_accounts(PaginationOption::Paginated(pagination)).await?
     };
+    let result = result.to_paginated_response();
 
     let edges = result.items.into_iter().map(|account| GraphQLAccountEdge {
         node: AccountDto {
@@ -434,6 +437,7 @@ async fn process_table_request(
     } else {
         ledger.list_accounts(PaginationOption::Paginated(pagination)).await?
     };
+    let result = result.to_paginated_response();
 
     // Note: In a real implementation, you'd handle sorting at the storage level
     // For this example, we'll just use the results as-is since they're already sorted by ID

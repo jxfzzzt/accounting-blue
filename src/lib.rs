@@ -16,7 +16,7 @@
 //! ## Quick Start
 //!
 //! ```rust
-//! use accounting_core::{Ledger, AccountType, PaginationParams};
+//! use accounting_core::{Ledger, AccountType, PaginationOption, PaginationParams};
 //! use accounting_core::utils::memory_storage::MemoryStorage;
 //! use bigdecimal::BigDecimal;
 //! use chrono::NaiveDate;
@@ -36,7 +36,9 @@
 //! ).await?;
 //!
 //! // List all accounts with pagination (default: page 1, 50 items per page)
-//! let accounts = ledger.list_accounts_paginated(PaginationParams::default()).await?;
+//! let pagination = PaginationParams::new(1, 50)?;
+//! let result = ledger.list_accounts(PaginationOption::Paginated(pagination)).await?;
+//! let accounts = result.to_paginated_response();
 //! println!("Total accounts: {}, Current page: {} of {}", 
 //!          accounts.total_count, 
 //!          accounts.page, 
@@ -52,7 +54,7 @@
 //! ### Basic Pagination
 //!
 //! ```rust
-//! use accounting_core::{Ledger, PaginationParams, AccountType};
+//! use accounting_core::{Ledger, PaginationOption, PaginationParams, AccountType};
 //! use accounting_core::utils::memory_storage::MemoryStorage;
 //!
 //! # #[tokio::main]
@@ -62,7 +64,8 @@
 //!
 //! // Get first page with 10 accounts per page
 //! let pagination = PaginationParams::new(1, 10)?;
-//! let result = ledger.list_accounts_paginated(pagination).await?;
+//! let result = ledger.list_accounts(PaginationOption::Paginated(pagination)).await?;
+//! let result = result.to_paginated_response();
 //!
 //! println!("Page {} of {} (showing {} of {} total accounts)", 
 //!          result.page, 
@@ -73,7 +76,7 @@
 //! // Check if there are more pages
 //! if result.has_next {
 //!     let next_page = PaginationParams::new(2, 10)?;
-//!     let next_result = ledger.list_accounts_paginated(next_page).await?;
+//!     let next_result = ledger.list_accounts(PaginationOption::Paginated(next_page)).await?;
 //!     // Process next page...
 //! }
 //! # Ok(())
@@ -83,7 +86,7 @@
 //! ### Filtered Pagination
 //!
 //! ```rust
-//! use accounting_core::{Ledger, PaginationParams, AccountType};
+//! use accounting_core::{Ledger, PaginationOption, PaginationParams, AccountType};
 //! use accounting_core::utils::memory_storage::MemoryStorage;
 //! use chrono::NaiveDate;
 //!
@@ -94,19 +97,19 @@
 //!
 //! // Get only Asset accounts with pagination
 //! let pagination = PaginationParams::new(1, 20)?;
-//! let assets = ledger.list_accounts_by_type_paginated(AccountType::Asset, pagination).await?;
+//! let assets = ledger.list_accounts_by_type(AccountType::Asset, PaginationOption::Paginated(pagination)).await?;
 //!
 //! // Get transactions for a specific date range with pagination
 //! let start_date = NaiveDate::from_ymd_opt(2024, 1, 1);
 //! let end_date = NaiveDate::from_ymd_opt(2024, 12, 31);
-//! let transactions = ledger.get_transactions_paginated(start_date, end_date, pagination).await?;
+//! let transactions = ledger.get_transactions(start_date, end_date, PaginationOption::Paginated(pagination)).await?;
 //!
 //! // Get transactions for a specific account with pagination
-//! let account_txns = ledger.get_account_transactions_paginated(
+//! let account_txns = ledger.get_account_transactions(
 //!     "cash", 
 //!     start_date, 
 //!     end_date, 
-//!     pagination
+//!     PaginationOption::Paginated(pagination)
 //! ).await?;
 //! # Ok(())
 //! # }
@@ -117,14 +120,15 @@
 //! All paginated responses include comprehensive metadata for building user interfaces:
 //!
 //! ```rust
-//! # use accounting_core::{Ledger, PaginationParams};
+//! # use accounting_core::{Ledger, PaginationOption, PaginationParams};
 //! # use accounting_core::utils::memory_storage::MemoryStorage;
 //! # #[tokio::main]
 //! # async fn main() -> Result<(), Box<dyn std::error::Error>> {
 //! # let storage = MemoryStorage::new();
 //! # let ledger = Ledger::new(storage);
 //! let pagination = PaginationParams::new(2, 10)?;
-//! let result = ledger.list_accounts_paginated(pagination).await?;
+//! let response = ledger.list_accounts(PaginationOption::Paginated(pagination)).await?;
+//! let result = response.to_paginated_response();
 //!
 //! // Access pagination metadata
 //! println!("Current page: {}", result.page);           // 2

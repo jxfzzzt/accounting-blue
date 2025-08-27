@@ -293,6 +293,7 @@ async fn actix_get_accounts(
     } else {
         ledger.list_accounts(PaginationOption::Paginated(pagination)).await?
     };
+    let result = result.to_paginated_response();
 
     let accounts = result.items.into_iter().map(|account| ActixAccountDto {
         code: account.id,
@@ -358,6 +359,7 @@ async fn warp_accounts_handler(
     } else {
         ledger.list_accounts(PaginationOption::Paginated(pagination)).await?
     };
+    let result = result.to_paginated_response();
 
     let data = result.items.into_iter().map(|account| WarpAccountDto {
         id: account.id,
