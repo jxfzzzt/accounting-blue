@@ -76,17 +76,23 @@ impl<S: LedgerStorage> AccountManager<S> {
             .ok_or_else(|| LedgerError::AccountNotFound(account_id.to_string()))
     }
 
-    /// List all accounts
-    pub async fn list_accounts(&self) -> LedgerResult<Vec<Account>> {
-        self.storage.list_accounts(None).await
+    /// List all accounts with optional pagination
+    pub async fn list_accounts(
+        &self,
+        pagination: PaginationOption,
+    ) -> LedgerResult<ListResponse<Account>> {
+        self.storage.list_accounts(None, pagination).await
     }
 
-    /// List accounts by type
+    /// List accounts by type with optional pagination
     pub async fn list_accounts_by_type(
         &self,
         account_type: AccountType,
-    ) -> LedgerResult<Vec<Account>> {
-        self.storage.list_accounts(Some(account_type)).await
+        pagination: PaginationOption,
+    ) -> LedgerResult<ListResponse<Account>> {
+        self.storage
+            .list_accounts(Some(account_type), pagination)
+            .await
     }
 
     /// Update an account
@@ -144,7 +150,11 @@ impl<S: LedgerStorage> StandardChartOfAccounts<S> {
 #[async_trait::async_trait]
 impl<S: LedgerStorage> ChartOfAccounts for StandardChartOfAccounts<S> {
     async fn get_chart(&self) -> LedgerResult<Vec<Account>> {
-        self.account_manager.list_accounts().await
+        let response = self
+            .account_manager
+            .list_accounts(PaginationOption::All)
+            .await?;
+        Ok(response.into_items())
     }
 
     async fn add_account(&mut self, account: Account) -> LedgerResult<()> {
@@ -152,8 +162,12 @@ impl<S: LedgerStorage> ChartOfAccounts for StandardChartOfAccounts<S> {
     }
 
     async fn get_child_accounts(&self, parent_id: &str) -> LedgerResult<Vec<Account>> {
-        let all_accounts = self.account_manager.list_accounts().await?;
+        let all_accounts = self
+            .account_manager
+            .list_accounts(PaginationOption::All)
+            .await?;
         Ok(all_accounts
+            .into_items()
             .into_iter()
             .filter(|account| account.parent_id.as_deref() == Some(parent_id))
             .collect())

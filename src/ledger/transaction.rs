@@ -96,25 +96,29 @@ impl<S: LedgerStorage> TransactionManager<S> {
             .ok_or_else(|| LedgerError::TransactionNotFound(transaction_id.to_string()))
     }
 
-    /// Get transactions for a specific account
+    /// Get transactions for a specific account with optional pagination
     pub async fn get_account_transactions(
         &self,
         account_id: &str,
         start_date: Option<NaiveDate>,
         end_date: Option<NaiveDate>,
-    ) -> LedgerResult<Vec<Transaction>> {
+        pagination: PaginationOption,
+    ) -> LedgerResult<ListResponse<Transaction>> {
         self.storage
-            .get_account_transactions(account_id, start_date, end_date)
+            .get_account_transactions(account_id, start_date, end_date, pagination)
             .await
     }
 
-    /// Get all transactions within a date range
+    /// Get all transactions within a date range with optional pagination
     pub async fn get_transactions(
         &self,
         start_date: Option<NaiveDate>,
         end_date: Option<NaiveDate>,
-    ) -> LedgerResult<Vec<Transaction>> {
-        self.storage.get_transactions(start_date, end_date).await
+        pagination: PaginationOption,
+    ) -> LedgerResult<ListResponse<Transaction>> {
+        self.storage
+            .get_transactions(start_date, end_date, pagination)
+            .await
     }
 
     /// Update a transaction (requires reversing old entries and applying new ones)
